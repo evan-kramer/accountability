@@ -14,7 +14,7 @@ student_level <- read_csv("N:/ORP_accountability/projects/2019_student_level_fil
     ) %>%
     mutate_at(vars(BHN, ED, SWD, EL, T1234, Gifted, Migrant), as.logical) %>%
     mutate(
-        year = 2019,
+        year = lubridate::year(lubridate::today()),
         test = if_else(test %in% c("MSAA", "Alt-Social Studies"), "MSAA/Alt-Social Studies", test),
         n_below = if_else(performance_level %in% c("Below", "Below Basic"), 1L, NA_integer_),
         n_approaching = if_else(performance_level %in% c("Approaching", "Basic"), 1L, NA_integer_),
@@ -28,16 +28,22 @@ student_level <- read_csv("N:/ORP_accountability/projects/2019_student_level_fil
         Native = reported_race == "American Indian/Alaska Native",
         White = reported_race == "White",
         EL_T1234 = EL | T1234,
-        Non_BHN = !BHN,
-        Non_ED = !ED,
-        Non_SWD = !SWD,
-        Non_EL = !EL_T1234,
+        Non_BHN = !BHN | is.na(BHN),
+        Non_ED = !ED | is.na(ED),
+        Non_SWD = !SWD | is.na(SWD),
+        Non_EL = !EL_T1234 | is.na(EL_T1234),
         Super = BHN | ED | SWD | EL_T1234,
         Male = gender == "M",
         Female = gender == "F",
         residential_facility = residential_facility == 1,
     # EL Recently Arrived are counted as tested and enrolled but do not receive a proficiency level
-        original_perfomance_level = if_else(el_recently_arrived == 1, "", original_performance_level)
+        original_perfomance_level = if_else(el_recently_arrived == 1, "", original_performance_level),
+    # Replace missing system_name
+        system_name = case_when(
+          system == 964 ~ "Tennessee School for the Deaf",
+          system == 970 ~ "Department Of Children's Services Education Division",
+          T ~ system_name
+        )
     )
 
 collapse <- function(g, ...) {
@@ -271,7 +277,7 @@ write_csv(school_assessment, "N:/ORP_accountability/data/2019_final_accountabili
 school_assessment %>%
     split(., .$system) %>%
     walk2(
-        .x = ., 
-        .y = district_numbers, 
+        .x = .,
+        .y = district_numbers,
         .f = ~ write_csv(.x, path = paste0("N:/ORP_accountability/data/2019_final_accountability_files/split/", .y, "_SchoolAssessmentFile_03Jul2019.csv"), na = "")
     )
