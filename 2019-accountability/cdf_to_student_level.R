@@ -2,7 +2,7 @@ library(acct)
 library(tidyverse)
 
 ## TODO: School Numbers for 964/964 and 970/970
-msaa <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_msaa_cdf.csv") %>%
+msaa <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_cdf/2019_msaa_cdf.csv") %>%
   filter(!(reporting_status %in% c("WDR", "NLE"))) %>%
   mutate(
     test = "MSAA",
@@ -13,7 +13,7 @@ msaa <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_msaa_cdf.csv") %>%
 print("MSAA loaded (1/9)")
 print(lubridate::now())
 
-fall_eoc <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_fall_eoc_cdf.csv", 
+fall_eoc <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_cdf/2019_fall_eoc_cdf.csv", 
                      col_types = "iciccccdiccccdiiiiciiciiciiciiiiiicc") %>%
   mutate(
     test = "EOC",
@@ -22,7 +22,7 @@ fall_eoc <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_fall_eoc_cdf.csv"
 print("Fall EOC loaded (2/9)")
 print(lubridate::now())
 
-spring_eoc <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_spring_eoc_cdf.csv",
+spring_eoc <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_cdf/2019_spring_eoc_cdf.csv",
                        col_types = "iciccccdiccccdiiiiciiciiciiciiiiiicc") %>%
   mutate(
     test = "EOC",
@@ -31,7 +31,7 @@ spring_eoc <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_spring_eoc_cdf.
 print("Spring EOC loaded (3/9)")
 print(lubridate::now())
 
-tn_ready <- read_csv("N:/ORP_accountability/data/2019_cdf/2019_3_8_cdf.csv",
+tn_ready <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_cdf/2019_3_8_cdf.csv",
                      col_types = "iciccccdiccccdiiiiciiciiciiciiiiiicc") %>%
   mutate(
     test = "TNReady",
@@ -167,7 +167,7 @@ print("Student-level initiated (6/9)")
 print(lubridate::now())
 
 # Records from Alternative, CTE, Adult HS are dropped from student level
-cte_alt_adult <- read_csv("N:/ORP_accountability/data/2019_tdoe_provided_files/cte_alt_adult_schools.csv") %>%
+cte_alt_adult <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_tdoe_provided_files/cte_alt_adult_schools.csv") %>%
   transmute(system = as.numeric(DISTRICT_NUMBER), school = as.numeric(SCHOOL_NUMBER))
 
 dedup <- student_level %>%
@@ -243,7 +243,7 @@ print("Deduplication complete (7/9)")
 print(lubridate::now())
 
 # Reassigned schools for accountability
-enrollment <- read_csv("N:/ORP_accountability/data/2019_final_accountability_files/enrollment.csv")
+enrollment <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_final_accountability_files/enrollment.csv")
 
 student_level <- dedup %>%
   select(
@@ -281,17 +281,17 @@ student_level <- dedup %>%
 print("Student-level compiled; outputting state-level file... (8/9)")
 print(lubridate::now())
 
-write_csv(student_level, "N:/ORP_accountability/projects/2019_student_level_file/2019_student_level_file.csv", na = "")
+write_csv(student_level, "//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/projects/2019_student_level_file/2019_student_level_file.csv", na = "")
 
 # Split student level file
-# district_numbers <- sort(unique(student_level$system))
-# print("Outputting district-level files... (9/9")
-# print(lubridate::now())
+district_numbers <- sort(unique(student_level$system))
+print("Outputting district-level files... (9/9)")
+print(lubridate::now())
 
-# student_level %>%
-#     split(., .$system) %>%
-#     walk2(
-#         .x = .,
-#         .y = district_numbers,
-#         .f = ~ write_csv(.x, path = paste0("N:/ORP_accountability/data/2019_final_accountability_files/split/", .y, "_StudentLevelFiles_07Jul2019.csv"), na = "")
-#     )
+student_level %>%
+    split(., .$system) %>%
+    walk2(
+        .x = .,
+        .y = district_numbers,
+        .f = ~ write_csv(.x, path = paste0("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_assessment_files/Split/", .y, "_StudentLevelFiles_08Jul2019.csv"), na = "")
+    )
