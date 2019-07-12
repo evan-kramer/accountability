@@ -13,126 +13,126 @@ library(RJDBC)
 #     Sys.getenv("DB_PASSWORD")
 # )
 
-con <- dbConnect(
-    JDBC("oracle.jdbc.OracleDriver", classPath="C:/Users/CA20593/Downloads/ojdbc6.jar"),
-    readRegistry("Environment", hive = "HCU")$EIS_MGR_CXN_STR[1],
-    "EIS_MGR",
-    readRegistry("Environment", hive = "HCU")$EIS_MGR_PWD[1]
-)
-
-# Pull attendance from database
-attendance <- dbGetQuery(con,
-    "SELECT
-    TO_CHAR(ISP.SCHOOL_YEAR) || '-' || TO_CHAR(ISP.SCHOOL_YEAR+1) AS SCHOOL_YEAR,
-    S.DISTRICT_NO,
-    S.SCHOOL_NO,
-    ISP.INSTRUCTIONAL_PROGRAM_NUM,
-    ISP.ISP_ID,
-    ISP.STUDENT_KEY,
-    ISP.FIRST_NAME,
-    ISP.MIDDLE_NAME,
-    ISP.LAST_NAME,
-    ISP.BEGIN_DATE,
-    ISP.END_DATE,
-    ISP.ENROLLMENT_REASON,
-    ISP.WITHDRAWAL_REASON,
-    ISP.TYPE_OF_SERVICE,
-    STU.DATE_OF_BIRTH,
-    STU.ETHNIC_ORIGIN,
-    STU.GENDER,
-    S.SCHOOL_BU_ID,
-    D.DISTRICT_BU_ID,
-    NVL (IG.ASSIGNMENT, ' ') AS GRADE,
-    DECODE(STU.ETHNICITY,'H','Hispanic','Non Hispanic') ETHNICITY,
-    STU.RACE_I,
-    STU.RACE_A,
-    STU.RACE_P,
-    STU.RACE_B,
-    STU.RACE_W,
-    (CASE WHEN TRUANTS.CNT_UNEXCUSED = 0 THEN NULL ELSE TRUANTS.CNT_UNEXCUSED END) AS CNT_UNEXCUSED,
-    (CASE WHEN TRUANTS.CNT_UNEXCUSED_TRANS = 0 THEN NULL ELSE TRUANTS.CNT_UNEXCUSED_TRANS END) AS CNT_UNEXCUSED_TRANS,
-    (CASE WHEN TRUANTS.CNT_EXCUSED = 0 THEN NULL ELSE TRUANTS.CNT_EXCUSED END) AS CNT_EXCUSED,
-    (CASE WHEN TRUANTS.CNT_EXCUSED_TRANS = 0 THEN NULL ELSE TRUANTS.CNT_EXCUSED_TRANS END) AS CNT_EXCUSED_TRANS,
-    TRUANTS.CNT_TOTAL,
-    (SELECT COUNT(SCAL.ID_DATE) AS ISP_DAYS_1
-      FROM EIS_MGR.SCAL_ID_DAYS SCAL
-      WHERE SCAL.SCHOOL_BU_ID = ISP.SCHOOL_BU_ID
-        AND SCAL.SCHOOL_YEAR = ISP.SCHOOL_YEAR
-        AND SCAL.INSTRUCTIONAL_PROGRAM_NUM = ISP.INSTRUCTIONAL_PROGRAM_NUM
-        AND SCAL.ID_DATE >= ISP.BEGIN_DATE
-        AND SCAL.ID_DATE <= NVL(ISP.END_DATE,
-          (SELECT MAX(SCAL_ID_DAYS.ID_DATE)
-              FROM EIS_MGR.SCAL_ID_DAYS
-              WHERE SCAL_ID_DAYS.SCHOOL_BU_ID = ISP.SCHOOL_BU_ID
-              AND SCAL.SCHOOL_YEAR = ISP.SCHOOL_YEAR
-              AND SCAL.INSTRUCTIONAL_PROGRAM_NUM = ISP.INSTRUCTIONAL_PROGRAM_NUM)
-          )
-    ) AS ISP_DAYS
-    FROM ISP
-    JOIN EIS_MGR.STUDENT_NEW STU ON STU.STUDENT_KEY = ISP.STUDENT_KEY
-    JOIN EIS_MGR.SCHOOL S ON ISP.SCHOOL_BU_ID = S.SCHOOL_BU_ID
-    LEFT JOIN EIS_MGR.INSTRUCTIONAL_GRADE IG ON ISP.ISP_ID = IG.ISP_ID
-    JOIN EIS_MGR.DISTRICT D ON S.DISTRICT_NO = D.DISTRICT_NO
-    LEFT JOIN (
-      SELECT ISP.ISP_ID,
-      COUNT(CASE WHEN ATTENDANCE_TYPE = 'U' THEN 1 END) AS CNT_UNEXCUSED,
-      COUNT(CASE WHEN ATTENDANCE_TYPE = 'X' THEN 1 END) AS CNT_UNEXCUSED_TRANS,
-      COUNT(CASE WHEN ATTENDANCE_TYPE = 'A' THEN 1 END) AS CNT_EXCUSED,
-      COUNT(CASE WHEN ATTENDANCE_TYPE = 'T' THEN 1 END) AS CNT_EXCUSED_TRANS,
-      COUNT(CASE WHEN ATTENDANCE_TYPE <> 'P' THEN 1 END) AS CNT_TOTAL
-      FROM EIS_MGR.INSTRUCTIONAL_SERVICE_PERIOD ISP
-      JOIN EIS_MGR.STUDENT_ABSENCES SA  ON ISP.ISP_ID = SA.ISP_ID
-      WHERE ISP.SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
-      AND SA.ATTENDANCE_DATE >= ISP.BEGIN_DATE
-      AND (SA.ATTENDANCE_DATE < ISP.END_DATE OR ISP.END_DATE IS NULL)
-      GROUP BY ISP.ISP_ID
-      ) TRUANTS ON ISP.ISP_ID = TRUANTS.ISP_ID
-    WHERE ISP.SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
-    AND IG.ASSIGNMENT NOT IN ('P3', 'P4')
-    ORDER BY S.DISTRICT_NO, S.SCHOOL_NO, ISP.LAST_NAME, ISP.FIRST_NAME") %>%
-    as.tbl() %>%
-    clean_names() %>%
-    mutate_at(
-        .vars = c("instructional_program_num", "district_no", "school_no", "student_key", "isp_days", "cnt_total"),
-        .f = as.numeric
-    ) %>%
-    select(
-        instructional_program_num, system = district_no, school = school_no, grade, student_key,
-        first_name, middle_name, last_name, begin_date, end_date, isp_days, cnt_total
-    )
+# con <- dbConnect(
+#     JDBC("oracle.jdbc.OracleDriver", classPath="C:/Users/CA20593/Downloads/ojdbc6.jar"),
+#     readRegistry("Environment", hive = "HCU")$EIS_MGR_CXN_STR[1],
+#     "EIS_MGR",
+#     readRegistry("Environment", hive = "HCU")$EIS_MGR_PWD[1]
+# )
+# 
+# # Pull attendance from database
+# attendance <- dbGetQuery(con,
+#     "SELECT
+#     TO_CHAR(ISP.SCHOOL_YEAR) || '-' || TO_CHAR(ISP.SCHOOL_YEAR+1) AS SCHOOL_YEAR,
+#     S.DISTRICT_NO,
+#     S.SCHOOL_NO,
+#     ISP.INSTRUCTIONAL_PROGRAM_NUM,
+#     ISP.ISP_ID,
+#     ISP.STUDENT_KEY,
+#     ISP.FIRST_NAME,
+#     ISP.MIDDLE_NAME,
+#     ISP.LAST_NAME,
+#     ISP.BEGIN_DATE,
+#     ISP.END_DATE,
+#     ISP.ENROLLMENT_REASON,
+#     ISP.WITHDRAWAL_REASON,
+#     ISP.TYPE_OF_SERVICE,
+#     STU.DATE_OF_BIRTH,
+#     STU.ETHNIC_ORIGIN,
+#     STU.GENDER,
+#     S.SCHOOL_BU_ID,
+#     D.DISTRICT_BU_ID,
+#     NVL (IG.ASSIGNMENT, ' ') AS GRADE,
+#     DECODE(STU.ETHNICITY,'H','Hispanic','Non Hispanic') ETHNICITY,
+#     STU.RACE_I,
+#     STU.RACE_A,
+#     STU.RACE_P,
+#     STU.RACE_B,
+#     STU.RACE_W,
+#     (CASE WHEN TRUANTS.CNT_UNEXCUSED = 0 THEN NULL ELSE TRUANTS.CNT_UNEXCUSED END) AS CNT_UNEXCUSED,
+#     (CASE WHEN TRUANTS.CNT_UNEXCUSED_TRANS = 0 THEN NULL ELSE TRUANTS.CNT_UNEXCUSED_TRANS END) AS CNT_UNEXCUSED_TRANS,
+#     (CASE WHEN TRUANTS.CNT_EXCUSED = 0 THEN NULL ELSE TRUANTS.CNT_EXCUSED END) AS CNT_EXCUSED,
+#     (CASE WHEN TRUANTS.CNT_EXCUSED_TRANS = 0 THEN NULL ELSE TRUANTS.CNT_EXCUSED_TRANS END) AS CNT_EXCUSED_TRANS,
+#     TRUANTS.CNT_TOTAL,
+#     (SELECT COUNT(SCAL.ID_DATE) AS ISP_DAYS_1
+#       FROM EIS_MGR.SCAL_ID_DAYS SCAL
+#       WHERE SCAL.SCHOOL_BU_ID = ISP.SCHOOL_BU_ID
+#         AND SCAL.SCHOOL_YEAR = ISP.SCHOOL_YEAR
+#         AND SCAL.INSTRUCTIONAL_PROGRAM_NUM = ISP.INSTRUCTIONAL_PROGRAM_NUM
+#         AND SCAL.ID_DATE >= ISP.BEGIN_DATE
+#         AND SCAL.ID_DATE <= NVL(ISP.END_DATE,
+#           (SELECT MAX(SCAL_ID_DAYS.ID_DATE)
+#               FROM EIS_MGR.SCAL_ID_DAYS
+#               WHERE SCAL_ID_DAYS.SCHOOL_BU_ID = ISP.SCHOOL_BU_ID
+#               AND SCAL.SCHOOL_YEAR = ISP.SCHOOL_YEAR
+#               AND SCAL.INSTRUCTIONAL_PROGRAM_NUM = ISP.INSTRUCTIONAL_PROGRAM_NUM)
+#           )
+#     ) AS ISP_DAYS
+#     FROM ISP
+#     JOIN EIS_MGR.STUDENT_NEW STU ON STU.STUDENT_KEY = ISP.STUDENT_KEY
+#     JOIN EIS_MGR.SCHOOL S ON ISP.SCHOOL_BU_ID = S.SCHOOL_BU_ID
+#     LEFT JOIN EIS_MGR.INSTRUCTIONAL_GRADE IG ON ISP.ISP_ID = IG.ISP_ID
+#     JOIN EIS_MGR.DISTRICT D ON S.DISTRICT_NO = D.DISTRICT_NO
+#     LEFT JOIN (
+#       SELECT ISP.ISP_ID,
+#       COUNT(CASE WHEN ATTENDANCE_TYPE = 'U' THEN 1 END) AS CNT_UNEXCUSED,
+#       COUNT(CASE WHEN ATTENDANCE_TYPE = 'X' THEN 1 END) AS CNT_UNEXCUSED_TRANS,
+#       COUNT(CASE WHEN ATTENDANCE_TYPE = 'A' THEN 1 END) AS CNT_EXCUSED,
+#       COUNT(CASE WHEN ATTENDANCE_TYPE = 'T' THEN 1 END) AS CNT_EXCUSED_TRANS,
+#       COUNT(CASE WHEN ATTENDANCE_TYPE <> 'P' THEN 1 END) AS CNT_TOTAL
+#       FROM EIS_MGR.INSTRUCTIONAL_SERVICE_PERIOD ISP
+#       JOIN EIS_MGR.STUDENT_ABSENCES SA  ON ISP.ISP_ID = SA.ISP_ID
+#       WHERE ISP.SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
+#       AND SA.ATTENDANCE_DATE >= ISP.BEGIN_DATE
+#       AND (SA.ATTENDANCE_DATE < ISP.END_DATE OR ISP.END_DATE IS NULL)
+#       GROUP BY ISP.ISP_ID
+#       ) TRUANTS ON ISP.ISP_ID = TRUANTS.ISP_ID
+#     WHERE ISP.SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
+#     AND IG.ASSIGNMENT NOT IN ('P3', 'P4') AND TYPE_OF_SERVICE = 'P'
+#     ORDER BY S.DISTRICT_NO, S.SCHOOL_NO, ISP.LAST_NAME, ISP.FIRST_NAME") %>%
+#     as.tbl() %>%
+#     clean_names() %>%
+#     mutate_at(
+#         .vars = c("instructional_program_num", "district_no", "school_no", "student_key", "isp_days", "cnt_total"),
+#         .f = as.numeric
+#     ) %>%
+#     select(
+#         instructional_program_num, system = district_no, school = school_no, grade, student_key,
+#         first_name, middle_name, last_name, begin_date, end_date, isp_days, cnt_total
+#     )
 
 # Export pull so we don't have to run it each time
-# write_csv(attendance, "N:\\ORP_accountability\\data\\2019_chronic_absenteeism\\absenteeism_pull.csv")
+# write_csv(attendance, "//edusmb.nas01.tn.gov/ca_EDData\\ORP_accountability\\data\\2019_chronic_absenteeism\\absenteeism_pull.csv")
 
-# attendance <- read_csv("N:/ORP_accountability/data/2019_chronic_absenteeism/absenteeism_pull.csv")
+attendance <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_chronic_absenteeism/absenteeism_pull_Jul11.csv")
 
 # Pull instructional calendar days from database
-instructional_days <- dbGetQuery(con,
-    "SELECT
-    SID.SCHOOL_BU_ID,
-    SID.SCHOOL_YEAR AS YEAR,
-    D.DISTRICT_NAME AS SYSTEM_NAME,
-    D.DISTRICT_NO AS SYSTEM,
-    S.SCHOOL_NAME,
-    S.SCHOOL_NO AS SCHOOL,
-    COUNT(DISTINCT SID.ID_DATE) AS INSTRUCTIONAL_DAYS
-    FROM EIS_MGR.SCAL_ID_DAYS SID
-    JOIN EIS_MGR.SCHOOL S ON SID.SCHOOL_BU_ID = S.SCHOOL_BU_ID
-    JOIN EIS_MGR.DISTRICT D ON S.DISTRICT_NO = D.DISTRICT_NO
-    WHERE SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
-        AND SID.ID_DATE <= SYSDATE
-    GROUP BY SID.SCHOOL_BU_ID, SID.SCHOOL_YEAR, D.DISTRICT_NAME, D.DISTRICT_NO, S.SCHOOL_NAME, S.SCHOOL_NO
-    ORDER BY SID.SCHOOL_BU_ID"
-) %>%
-    as.tbl() %>%
-    clean_names()
+# instructional_days <- dbGetQuery(con,
+#     "SELECT
+#     SID.SCHOOL_BU_ID,
+#     SID.SCHOOL_YEAR AS YEAR,
+#     D.DISTRICT_NAME AS SYSTEM_NAME,
+#     D.DISTRICT_NO AS SYSTEM,
+#     S.SCHOOL_NAME,
+#     S.SCHOOL_NO AS SCHOOL,
+#     COUNT(DISTINCT SID.ID_DATE) AS INSTRUCTIONAL_DAYS
+#     FROM EIS_MGR.SCAL_ID_DAYS SID
+#     JOIN EIS_MGR.SCHOOL S ON SID.SCHOOL_BU_ID = S.SCHOOL_BU_ID
+#     JOIN EIS_MGR.DISTRICT D ON S.DISTRICT_NO = D.DISTRICT_NO
+#     WHERE SCHOOL_YEAR = EXTRACT(YEAR FROM SYSDATE) - 1
+#         AND SID.ID_DATE <= SYSDATE
+#     GROUP BY SID.SCHOOL_BU_ID, SID.SCHOOL_YEAR, D.DISTRICT_NAME, D.DISTRICT_NO, S.SCHOOL_NAME, S.SCHOOL_NO
+#     ORDER BY SID.SCHOOL_BU_ID"
+# ) %>%
+#     as.tbl() %>%
+#     clean_names()
 
-# write_csv(instructional_days, "N:\\ORP_accountability\\data\\2019_chronic_absenteeism\\instructional_days.csv")
+# write_csv(instructional_days, "//edusmb.nas01.tn.gov/ca_EDData\\ORP_accountability\\data\\2019_chronic_absenteeism\\instructional_days.csv")
 
-# instructional_days <- read_csv("N:/ORP_accountability/data/2019_chronic_absenteeism/instructional_days.csv")
+instructional_days <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_chronic_absenteeism/instructional_days.csv")
 
 # Demographic file
-demographics <- read_csv("N:/TNReady/2018-19/spring/demographics/spring_2019_assessment_demographics_combined_pull_20190610.csv") %>%
+demographics <- read_csv("//edusmb.nas01.tn.gov/ca_EDData/TNReady/2018-19/spring/demographics/spring_2019_assessment_demographics_combined_pull_20190610.csv") %>%
   # Student IDs should be 7 digits
   filter(str_length(student_key) == 7) %>%
   transmute(
@@ -253,7 +253,7 @@ students_state <- absenteeism %>%
     EL = any(EL, na.rm = TRUE),
     Black = any(Black, na.rm = TRUE),
     Hispanic = any(Hispanic, na.rm = TRUE),
-    Native = any(Black, na.rm = TRUE),
+    Native = any(Native, na.rm = TRUE),
     HPI = any(HPI, na.rm = TRUE),
     Asian = any(Asian, na.rm = TRUE),
     White = any(White, na.rm = TRUE)
@@ -302,7 +302,7 @@ students_district <- absenteeism %>%
     EL = any(EL, na.rm = TRUE),
     Black = any(Black, na.rm = TRUE),
     Hispanic = any(Hispanic, na.rm = TRUE),
-    Native = any(Black, na.rm = TRUE),
+    Native = any(Native, na.rm = TRUE),
     HPI = any(HPI, na.rm = TRUE),
     Asian = any(Asian, na.rm = TRUE),
     White = any(White, na.rm = TRUE)
@@ -381,7 +381,7 @@ student <- absenteeism %>%
     .f = ~ if_else(is.na(.), 0L, as.integer(.))
   )
 
-setwd(str_c("N:/ORP_accountability/data/", year(today()), "_chronic_absenteeism"))
+setwd(str_c("//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/", year(today()), "_chronic_absenteeism"))
 
 # State, district, school, and student output
 write_csv(student, str_c("student_chronic_absenteeism_", month(today(), label = TRUE), day(today()), ".csv"), na = "")
@@ -397,7 +397,16 @@ student %>%
   walk2(
     .x = ., 
     .y = district_numbers, 
-    .f = ~ write_csv(.x, path = paste0("N:/ORP_accountability/data/2019_chronic_absenteeism/split/", .y, "_ChronicAbsenteeismStudentFile_17Jun2019.csv"), na = "")
+    .f = ~ write_csv(
+      .x, 
+      path = paste0(
+        "//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_chronic_absenteeism/split/", 
+        .y, 
+        "_ChronicAbsenteeismStudentFile_", 
+        day(now()), month(now(), label = T, abbr = T), year(now()), ".csv"
+      ),
+      na = ""
+    ) 
   )
 
 district %>%
@@ -405,7 +414,16 @@ district %>%
   walk2(
     .x = .,
     .y = district_numbers, 
-    .f = ~ write_csv(.x, path = paste0("N:/ORP_accountability/data/2019_chronic_absenteeism/split/", .y, "_ChronicAbsenteeismDistrictFile_17Jun2019.csv"), na = "")
+    .f = ~ write_csv(
+      .x, 
+      path = paste0(
+        "//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_chronic_absenteeism/split/", 
+        .y, 
+        "_ChronicAbsenteeismDistrictFile",
+        day(now()), month(now(), label = T, abbr = T), year(now()), ".csv"
+      ),
+    na = ""
+    )
   )
 
 school %>%
@@ -413,5 +431,14 @@ school %>%
   walk2(
     .x = .,
     .y = district_numbers, 
-    .f = ~ write_csv(.x, path = paste0("N:/ORP_accountability/data/2019_chronic_absenteeism/split/", .y, "_ChronicAbsenteeismSchoolFile_17Jun2019.csv"), na = "")
+    .f = ~ write_csv(
+      .x, 
+      path = paste0(
+        "//edusmb.nas01.tn.gov/ca_EDData/ORP_accountability/data/2019_chronic_absenteeism/split/", 
+        .y, 
+        "_ChronicAbsenteeismSchoolFile_",
+        day(now()), month(now(), label = T, abbr = T), year(now()), ".csv"
+      ), 
+      na = ""
+    )
   )

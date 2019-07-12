@@ -107,6 +107,7 @@ student_level <- bind_rows(cdf, msaa) %>%
     gender,
     reported_race, 
     bhn_group = reported_race %in% c("Black or African American", "Hispanic/Latino", "American Indian/Alaska Native"),
+    teacher_of_record_tln,
     economically_disadvantaged,
     el,
     el_recently_arrived = (el_arrived_year_1 == 1 | el_arrived_year_2 == 1),
@@ -249,7 +250,7 @@ student_level <- dedup %>%
   select(
     system, system_name, school, school_name, test, original_subject, subject, semester,
     original_performance_level, performance_level, scale_score, enrolled, tested, valid_test,
-    state_student_id, last_name, first_name, grade, gender, reported_race, bhn_group,
+    state_student_id, last_name, first_name, grade, gender, reported_race, bhn_group, teacher_of_record_tln,
     functionally_delayed, special_ed, economically_disadvantaged, gifted, migrant, el, t1234, el_recently_arrived,
     enrolled_50_pct_district, enrolled_50_pct_school, absent, refused_to_test, residential_facility
   ) %>%
