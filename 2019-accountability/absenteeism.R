@@ -371,7 +371,7 @@ school <- groups %>%
 student <- absenteeism %>%
   transmute(
     system, system_name, school, school_name, 
-    student_id = student_key, first_name, middle_name, last_name,
+    student_id = student_key, grade, first_name, middle_name, last_name,
     n_absences, isp_days, instructional_calendar_days = instructional_days,
     absentee_rate = round5(100 * n_absences/isp_days, 1),
     Black, Hispanic, Native, HPI, Asian, White, ED, SWD, EL
