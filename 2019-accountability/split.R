@@ -9,29 +9,36 @@ library(acct)
 library(xlsx)
 setwd("N:/ORP_accountability")
 
-# District accountability file
-file = read_csv(str_c("data/", year(now()), "_final_accountability_files/district_accountability_file.csv"))
-file %>% 
-  split(., .$system) %>% 
-  walk2(
-    .x = .,
-    .y = sort(unique(file$system)),
-    .f = ~ write_csv(
-      .x,
-      path = str_c(
-        "data/",
-        year(now()),
-        "_final_accountability_files/split/",
-        .y,
-        "_DistrictAccountabilityFile_",
-        day(now()),
-        month(now(), label = T, abbr = T),
-        year(now()),
-        ".csv"
-      ),
-      na = ""
+district = F
+school = T
+if(district) {
+  # District accountability file
+  file = read_csv(str_c("data/", year(now()), "_final_accountability_files/district_accountability_file.csv"))
+  file %>% 
+    split(., .$system) %>% 
+    walk2(
+      .x = .,
+      .y = sort(unique(file$system)),
+      .f = ~ write_csv(
+        .x,
+        path = str_c(
+          "data/",
+          year(now()),
+          "_final_accountability_files/split/",
+          .y,
+          "_DistrictAccountabilityFile_",
+          day(now()),
+          month(now(), label = T, abbr = T),
+          year(now()),
+          ".csv"
+        ),
+        na = ""
+      )
     )
-  )
+  
+} else {
+  rm(district)
+}
 
 # School accountability file
 ## Metrics
